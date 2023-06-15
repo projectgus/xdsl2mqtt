@@ -1,0 +1,7 @@
+# AMQTT 0.11 prereleases, for Python >=3.7 support
+amqtt @ git+https://github.com/Yakifo/amqtt.git@08028ebef86e7732d0abfa1a153647e7ac961be9
+
+# telnetlib3 2.0.1 and 2.0.2 both have a bug with debug=True, see
+# https://github.com/jquast/telnetlib3/pull/75
+telnetlib3==2.0.0
+
