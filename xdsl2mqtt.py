@@ -93,11 +93,11 @@ class BroadcomTelnet:
         p.add_downup("atten_db", "Attn(dB):", float)
         p.add_downup("power_dbm", "Pwr(dBm):", float)
 
+        # Current upstream/downstream rate, as Bearer 0
+        p.add_rate("rate", "Bearer: 0,")
+
         # Max upstream/downstream rates, a one-off format
-        expr = r"Max:\s+Upstream rate = (\d+) Kbps, Downstream rate = (\d+) Kbps"
-        m = re.search(expr, raw)
-        if m:
-            p.parsed["max_rate"] = {"down": int(m.group(2)), "up": int(m.group(1))}
+        p.add_rate("max_rate", "Max:")
 
         errc = p.parsed["error_counters"] = {}
         # Explanation of acronyms: https://kitz.co.uk/adsl/linestats_errors.htm
@@ -166,6 +166,21 @@ class OutputParser:
         m = re.search(r"{}\s*(\d+)".format(re.escape(prefix)), self.raw)
         if m:
             dest[key] = int(m.group(1))
+
+    def add_rate(self, key, prefix, dest=None):
+        """Extract a pair of rates with the given prefix, followed by
+        "Upstream rate = XXX Kbps, Downstream rate = XXX Kbps" and add
+        the up/down values as integers to dest[key].
+        """
+        if dest is None:
+            dest = self.parsed
+        expr = r"{}\s*Upstream rate = (\d+) Kbps, Downstream rate = (\d+) Kbps".format(
+            prefix
+        )
+        m = re.search(expr, self.raw)
+        logger.info(expr, m)
+        if m:
+            dest[key] = {"down": int(m.group(2)), "up": int(m.group(1))}
 
     def add_downup(self, key, prefix, ntype, dest=None):
         """Extract a pair of values of the form "<prefix label>: XXX YYY" where

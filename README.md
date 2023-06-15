@@ -477,13 +477,13 @@ Telnet command `xdslctl info --stats` is run and publishes to MQTT topic `xdsl2/
     }
   },
   "banner": "BCM963381 Broadband Router"
-}}
+}
 ```
 
 Deciphering this output requires DSL knowledge that I don't really have. Most of what I know is cribbed from [this page](https://kitz.co.uk/adsl/linestats_errors.htm), and [this forum thread](https://forum.kitz.co.uk/index.php?topic=10289.0).
 
 However, the fields (as I understand them) are:
-
+:
 * `profile`: [VDSL Profile](https://en.wikipedia.org/wiki/VDSL#Profiles) in use.
 * `line_status`: Is `"No defect"` if the line is happy, something else otherwise.
 * `training_status`: Is `"Showtime"` when the line is synced, other values during initialization and line training phases.
@@ -491,7 +491,8 @@ However, the fields (as I understand them) are:
 
 The remaining fields all have separate values for upstream and downstream directions:
 
-* `max_rate`: Maximum achievable rate in Kbps, often informally called "sync speed". This is the thing most people care about.
+* `rate`: Current data rate in Kbps often informally called "sync speed". This is the thing most people care about.
+* `max_rate`: Maximum achievable rate in Kbps.
 * `snr_db`: Signal to noise ratio of the line (in dB).
 * `atten_db`: Signal attenuation (in dB).
 * `power_dbm`: Power output in dBm. (I don't know, and someone can maybe explain, how the downstream value is calculated here - does the other end report it?)
@@ -509,7 +510,7 @@ The `error_counters` object contains some global (since boot) counters for diffe
 
 The `g.inp` object contains some values relevant to the [G.INP Retranmission](https://kitz.co.uk/adsl/retransmission.htm) xDSL feature, if it is enabled:
 
-* `min_EFTR` - is the Minimum Error-Free Throughput Rate (in Kbps) according to the current line conditions. Expect this will map more closely to real maximum transfer speeds than the `max_rate` value.
+* `min_EFTR` - is the Minimum Error-Free Throughput Rate (in Kbps) according to the current line conditions. This may map more closely to real maximum transfer speeds than the `rate` value(?)
 * `LEFTRS` - Total number of seconds where at least one "Low EFTR" (LEFTR) defect occurred. I assume this means the EFTR value dipped below some acceptable threshold as configured in the modem, although I don't know exactly how this is calculated.
 
 * `banner` - This is whatever text the modem outputs when you log in via Telnet.
