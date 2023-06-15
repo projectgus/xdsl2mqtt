@@ -45,6 +45,7 @@ If your xDSL modem doesn't have a Broadcom chipset, doesn't have a Telnet interf
 
 <details>
 <summary>Sample output from these two commands on DSL-G225</summary>
+
 ```
  > xdslctl info --stats
 xdslctl: ADSL driver and PHY status
@@ -337,6 +338,7 @@ ptm0.1    Link encap:Ethernet  HWaddr (snipped)
 ```
 
 Note: In this example, `ptm0.1` is the xDSL modem interface. Most of the other interfaces are unused, as the modem is in bridge mode.
+
 </details>
 
 ## Configuring
