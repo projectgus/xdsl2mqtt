@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+#
+# Copyright 2023 Angus Gratton
+#
+# SPDX-License-Identifier: MIT
 import argparse
 import asyncio
 import configparser
