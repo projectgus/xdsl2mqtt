@@ -9,12 +9,14 @@ Disclaimer: I'm not an ADSL or VDSL expert, just a frustrated NBN customer.
 ## Alternative Programs
 
 * [DSLStats](http://dslstats.me.uk/index.html) looks to have an impressive amount of modem support, although it doesn't integrate with MQTT so I didn't try it out. It is apparently free software under GPL, but you have to [contact the author to get the source](http://dslstats.me.uk/licence.html).
+* Many modems have SNMP support which is a better alternative if it's present and supported.
+
 
 ## Modem Support
 
 Currently:
 
-* D-Link DSL-G225, with a Broadcom BCM963381 VDSL2 chipset.
+* D-Link DSL-G225, with a Broadcom BCM963381 VDSL2 chipset. Telnet interface can be enabled in the Web Interface under Maintenance -> Access Controls -> Services.
 
 This will probably work on other Broadcom chipset modems, but may need some tweaking.
 
@@ -41,7 +43,7 @@ If your modem's telnet interface says something other than `BCM963381 Broadband 
 
 If this program doesn't work with your modem and you'd like support added, run two commands in the telnet interface - `xdslctl info --stats` and `ifconfig`. Then open an issue here with the output from them, and I'll see what I can do.
 
-If your xDSL modem doesn't have a Broadcom chipset, doesn't have a Telnet interface available, or doesn't support the `xdslctl info --stats` command then it won't be very easy to add support, sorry. Pull Requests to add more support would still be welcome, though, provided they are maintainable!
+If your xDSL modem doesn't have a Broadcom chipset, doesn't support a Telnet interface, or doesn't support the `xdslctl info --stats` command then it won't be very easy to add support, sorry. Pull Requests to add more support would still be welcome, though, provided they are maintainable!
 
 <details>
 <summary>Sample output from these two commands on DSL-G225</summary>
@@ -351,9 +353,9 @@ Create a `config.ini` file with contents such as the following:
 
 [mqtt]
 uri=mqtt://mqtt_url_here/
-# topic_prefix = xdsl2
+# topic_prefix = xdsl
 
-[xdsl2]
+[xdsl]
 host=192.168.1.1
 # user=admin
 # password=admin
@@ -372,7 +374,7 @@ host=192.168.1.1
 * `uri` is the URI of your MQTT broker, as per the [MQTT URI scheme](https://github.com/mqtt/mqtt.org/wiki/URI-Scheme) as [implemented by aMQTT](https://amqtt.readthedocs.io/en/latest/quickstart.html#url-scheme). Username and password for the broker are encoded here.
 * `topic_prefix` is optional. MQTT messages are published to `<topic_prefix>/stats` and `<topic_prefix>/interface`.
 
-`[xdsl2]`
+`[xdsl]`
 
 * `host` is the IP address or hostname of the modem, used to connect to the telnet interface.
 * `username` and `password` are for the telnet login of the modem, default values are `admin:admin`.
@@ -407,7 +409,7 @@ For as long as the telnet connection to the modem stays up, the script periodica
 
 ### Stats
 
-Telnet command `xdslctl info --stats` is run and publishes to MQTT topic `xdsl2/stats` (prefix configurable):
+Telnet command `xdslctl info --stats` is run and publishes to MQTT topic `xdsl/stats` (prefix configurable):
 
 ```json
 {
@@ -466,7 +468,7 @@ Telnet command `xdslctl info --stats` is run and publishes to MQTT topic `xdsl2/
       "up": 0
     }
   },
-  "g.inp": {
+  "ginp": {
     "LEFTRS": {
       "down": 0,
       "up": 1196
@@ -508,7 +510,7 @@ The `error_counters` object contains some global (since boot) counters for diffe
 * `LOF`: Number of "loss of frame" events, during which the modem received an Out of Frame condition that didn't resolve immediately.
 * `LOM`: Number of "loss of margin" events, during which the modem lost its acceptable "noise margin" and had to increase transmit power.
 
-The `g.inp` object contains some values relevant to the [G.INP Retranmission](https://kitz.co.uk/adsl/retransmission.htm) xDSL feature, if it is enabled:
+The `ginp` object contains some values relevant to the [G.INP Retranmission](https://kitz.co.uk/adsl/retransmission.htm) xDSL feature, if it is enabled:
 
 * `min_EFTR` - is the Minimum Error-Free Throughput Rate (in Kbps) according to the current line conditions. This may map more closely to real maximum transfer speeds than the `rate` value(?)
 * `LEFTRS` - Total number of seconds where at least one "Low EFTR" (LEFTR) defect occurred. I assume this means the EFTR value dipped below some acceptable threshold as configured in the modem, although I don't know exactly how this is calculated.
@@ -517,7 +519,7 @@ The `g.inp` object contains some values relevant to the [G.INP Retranmission](ht
 
 ### Network Interface
 
-Telnet command `ifconfig ptm0.1` is run and published to MQTT topic `xdsl2/interface` (prefix configurable):
+Telnet command `ifconfig ptm0.1` is run and published to MQTT topic `xdsl/interface` (prefix configurable):
 
 ```json
 {
@@ -539,4 +541,4 @@ Telnet command `ifconfig ptm0.1` is run and published to MQTT topic `xdsl2/inter
 
 ## Telegraf Configuration
 
-TBD
+See `telegraf.conf.snippet`.

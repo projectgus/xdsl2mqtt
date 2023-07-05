@@ -1,0 +1,136 @@
+# This is a snippet of a Telegraf configuration, NOT A COMPLETE
+# CONFIGURATION.
+#
+# It takes in the xdsl2mqtt output and pushes it into two influxdb measurements
+# - "stats" and "interface", with various fields.
+#
+# ... this seems mega clunky to me, but I'm not an expert in Telegraf or Influx
+# and it's the best I've been able to make work. Feel free to send PRs with
+# better configurations, or to recommend more suitable tools for this.
+
+[[inputs.mqtt_consumer]]
+  servers = ["SERVER_URL_HERE"]
+  username = "USERNAME_HERE"
+  password = "PASSWORD_HERE"
+  topics = ["xdsl/stats"]
+  # picked up by influxdb_v2 consumer setting bucket_tag = "bucket"
+  tags = {bucket = "vdsl"}
+  data_format = "json_v2"
+  [[inputs.mqtt_consumer.json_v2]]
+    measurement_name = "stats"
+    [[inputs.mqtt_consumer.json_v2.field]]
+      path = "profile"
+      type = "string"
+    [[inputs.mqtt_consumer.json_v2.field]]
+      path = "line_status"
+      type = "string"
+    [[inputs.mqtt_consumer.json_v2.field]]
+      path = "training_status"
+      type = "string"
+    [[inputs.mqtt_consumer.json_v2.field]]
+      path = "last_retrain_reason"
+      type = "int"
+    [[inputs.mqtt_consumer.json_v2.field]]
+      path = "last_init_status"
+      type = "int"
+    [[inputs.mqtt_consumer.json_v2.field]]
+      path = "rate.up"
+      rename = "rate_up"
+      type = "int"
+    [[inputs.mqtt_consumer.json_v2.field]]
+      path = "rate.down"
+      rename = "rate_down"
+      type = "int"
+    [[inputs.mqtt_consumer.json_v2.field]]
+      path = "max_rate.up"
+      rename = "max_rate_up"
+      type = "int"
+    [[inputs.mqtt_consumer.json_v2.field]]
+      path = "max_rate.down"
+      rename = "max_rate_down"
+      type = "int"
+    [[inputs.mqtt_consumer.json_v2.field]]
+      path = "error_counters.FEC.down"
+      rename = "FEC_down"
+      type = "int"
+    [[inputs.mqtt_consumer.json_v2.field]]
+      path = "error_counters.FEC.up"
+      rename = "FEC_up"
+      type = "int"
+    [[inputs.mqtt_consumer.json_v2.field]]
+      path = "error_counters.CRC.down"
+      rename = "CRC_down"
+      type = "int"
+    [[inputs.mqtt_consumer.json_v2.field]]
+      path = "error_counters.CRC.up"
+      rename = "CRC_up"
+      type = "int"
+    [[inputs.mqtt_consumer.json_v2.field]]
+      path = "error_counters.ES.down"
+      rename = "ES_down"
+      type = "int"
+    [[inputs.mqtt_consumer.json_v2.field]]
+      path = "error_counters.ES.up"
+      rename = "ES_up"
+      type = "int"
+    [[inputs.mqtt_consumer.json_v2.field]]
+      path = "error_counters.SES.down"
+      rename = "SES_down"
+      type = "int"
+    [[inputs.mqtt_consumer.json_v2.field]]
+      path = "error_counters.SES.up"
+      rename = "SES_up"
+      type = "int"
+    [[inputs.mqtt_consumer.json_v2.field]]
+      path = "error_counters.UAS.down"
+      rename = "UAS_down"
+      type = "int"
+    [[inputs.mqtt_consumer.json_v2.field]]
+      path = "error_counters.UAS.up"
+      rename = "UAS_up"
+      type = "int"
+    [[inputs.mqtt_consumer.json_v2.field]]
+      path = "ginp.LEFTRS.down"
+      rename = "LEFTRS_down"
+      type = "int"
+    [[inputs.mqtt_consumer.json_v2.field]]
+      path = "ginp.LEFTRS.up"
+      rename = "LEFTRS_up"
+      type = "int"
+    [[inputs.mqtt_consumer.json_v2.field]]
+      path = "ginp.min_EFTR.down"
+      rename = "min_EFTR_down"
+      type = "int"
+    [[inputs.mqtt_consumer.json_v2.field]]
+      path = "ginp.min_EFTR.up"
+      rename = "min_EFTR_up"
+      type = "int"
+
+[[inputs.mqtt_consumer]]
+  servers = ["SERVER_URL_HERE"]
+  username = "USERNAME_HERE"
+  password = "PASSWORD_HERE"
+  topics = ["xdsl/interface"]
+  tags = {bucket = "vdsl"}  # as above, picked up by influxdb_v2 consumer
+  data_format = "json_v2"
+  [[inputs.mqtt_consumer.json_v2]]
+    measurement_name = "interface"
+    [[inputs.mqtt_consumer.json_v2.field]]
+      path = "up"
+      type = "bool"
+    [[inputs.mqtt_consumer.json_v2.field]]
+      path = "packets.rx"
+      rename = "packets_rx"
+      type = "int"
+    [[inputs.mqtt_consumer.json_v2.field]]
+      path = "packets.tx"
+      rename = "packets_tx"
+      type = "int"
+    [[inputs.mqtt_consumer.json_v2.field]]
+      path = "bytes.rx"
+      rename = "bytes_rx"
+      type = "int"
+    [[inputs.mqtt_consumer.json_v2.field]]
+      path = "bytes.tx"
+      rename = "bytes_tx"
+      type = "int"

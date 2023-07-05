@@ -62,6 +62,8 @@ class BroadcomTelnet:
 
         res = ""
         while prompt not in res:
+            if self.r.connection_closed:
+                raise RuntimeError("Telnet connection closed")
             new = await self.r.read(80)
             logger.debug("<<< " + repr(new))
             res += new
@@ -108,7 +110,7 @@ class BroadcomTelnet:
             p.add_downup(counter, counter + ":", int, errc)
 
         # G.INP, "impulse noise" protection
-        ginp = p.parsed["g.inp"] = {}
+        ginp = p.parsed["ginp"] = {}
         # Seconds when one or more Low Error-Free Throughput Defect was logged
         p.add_downup("LEFTRS", "LEFTRS:", int, ginp)
         # minimum Error-Free Throughput
@@ -203,18 +205,18 @@ class OutputParser:
 async def main(config):
     mqtt_config = config["mqtt"]
     mqtt_uri = mqtt_config["uri"]
-    mqtt_topic_prefix = mqtt_config.get("topic_prefix", "xdsl2")
+    mqtt_topic_prefix = mqtt_config.get("topic_prefix", "xdsl")
 
-    xdsl2_config = config["xdsl2"]
-    xdsl2_host = xdsl2_config["host"]
-    xdsl2_user = xdsl2_config.get("user", "admin")
-    xdsl2_password = xdsl2_config.get("password", "admin")
-    xdsl2_port = int(xdsl2_config.get("port", 23))
-    xdsl2_timeout = int(xdsl2_config.get("connect_timeout", 8))
-    xdsl2_poll_delay = int(xdsl2_config.get("poll_delay", 30))
+    xdsl_config = config["xdsl"]
+    xdsl_host = xdsl_config["host"]
+    xdsl_user = xdsl_config.get("user", "admin")
+    xdsl_password = xdsl_config.get("password", "admin")
+    xdsl_port = int(xdsl_config.get("port", 23))
+    xdsl_timeout = int(xdsl_config.get("connect_timeout", 8))
+    xdsl_poll_delay = int(xdsl_config.get("poll_delay", 30))
 
-    t = BroadcomTelnet(xdsl2_host, xdsl2_port, xdsl2_user, xdsl2_password)
-    await asyncio.wait_for(t.connect(), xdsl2_timeout)
+    t = BroadcomTelnet(xdsl_host, xdsl_port, xdsl_user, xdsl_password)
+    await asyncio.wait_for(t.connect(), xdsl_timeout)
 
     m = amqtt.MQTTClient("xdsl2mqtt")
     await m.connect(mqtt_uri)
@@ -233,7 +235,7 @@ async def main(config):
 
         await m.publish(stats_topic, stats_payload.encode())
         await m.publish(interface_topic, interface_payload.encode())
-        await asyncio.sleep(xdsl2_poll_delay)
+        await asyncio.sleep(xdsl_poll_delay)
 
 
 if __name__ == "__main__":
