@@ -180,7 +180,6 @@ class OutputParser:
             prefix
         )
         m = re.search(expr, self.raw)
-        logger.info(expr, m)
         if m:
             dest[key] = {"down": int(m.group(2)), "up": int(m.group(1))}
 
@@ -195,7 +194,6 @@ class OutputParser:
             dest = self.parsed
         expr = r"{}\s+([^\s]+)\s+([^\s]+)".format(re.escape(prefix))
         m = re.search(expr, self.raw)
-        logger.debug((expr, m))
         if m:
             down = ntype(m.group(1))
             up = ntype(m.group(2))
