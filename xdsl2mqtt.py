@@ -4,10 +4,9 @@
 #
 # SPDX-License-Identifier: MIT
 import argparse
-import asyncio
+from asyncio import run, sleep, wait_for
 import configparser
 import logging
-import pprint
 import telnetlib3
 import json
 import re
@@ -210,17 +209,18 @@ async def main(config):
     xdsl_user = xdsl_config.get("user", "admin")
     xdsl_password = xdsl_config.get("password", "admin")
     xdsl_port = int(xdsl_config.get("port", 23))
-    xdsl_timeout = int(xdsl_config.get("connect_timeout", 8))
+    xdsl_connect_timeout = int(xdsl_config.get("connect_timeout", 8))
+    xdsl_timeout = int(xdsl_config.get("command_timeout", 5))
     xdsl_poll_delay = int(xdsl_config.get("poll_delay", 30))
 
     t = BroadcomTelnet(xdsl_host, xdsl_port, xdsl_user, xdsl_password)
-    await asyncio.wait_for(t.connect(), xdsl_timeout)
+    await wait_for(t.connect(), xdsl_connect_timeout)
 
     m = amqtt.MQTTClient("xdsl2mqtt")
-    await m.connect(mqtt_uri)
+    await wait_for(m.connect(mqtt_uri), xdsl_connect_timeout)
 
     while True:
-        stats = await t.xdsl_stats()
+        stats = await wait_for(t.xdsl_stats(), xdsl_timeout)
         stats["banner"] = t.banner
         interface = await t.ifconfig()
         stats_topic = f"{mqtt_topic_prefix}/stats"
@@ -231,9 +231,11 @@ async def main(config):
         logger.debug(f"Publish {stats_topic} {stats_payload}")
         logger.debug(f"Publish {interface_topic} {interface_payload}")
 
-        await m.publish(stats_topic, stats_payload.encode())
-        await m.publish(interface_topic, interface_payload.encode())
-        await asyncio.sleep(xdsl_poll_delay)
+        await wait_for(m.publish(stats_topic, stats_payload.encode()), xdsl_timeout)
+        await wait_for(
+            m.publish(interface_topic, interface_payload.encode()), xdsl_timeout
+        )
+        await sleep(xdsl_poll_delay)
 
 
 if __name__ == "__main__":
@@ -249,4 +251,4 @@ if __name__ == "__main__":
 
     logging.basicConfig(level=logging.DEBUG if debug else logging.INFO)
 
-    asyncio.run(main(config), debug=debug)
+    run(main(config), debug=debug)

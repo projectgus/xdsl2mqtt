@@ -360,6 +360,7 @@ host=192.168.1.1
 # user=admin
 # password=admin
 # connect_timeout=8
+# timeout=5
 # poll_delay=30
 ```
 
@@ -378,7 +379,8 @@ host=192.168.1.1
 
 * `host` is the IP address or hostname of the modem, used to connect to the telnet interface.
 * `username` and `password` are for the telnet login of the modem, default values are `admin:admin`.
-* `connect_timeout` is timeout (in seconds) before failing to connect to the modem. Currently the program exits if connection fails, and expects some service host to restart it.
+* `connect_timeout` is timeout (in seconds) before failing to connect to either the modem or the MQTT broker. Currently the program exits if connection fails, and expects some service host to restart it.
+* `timeout` is timeout (in seconds) to read the stats from the modem, or to publish to MQTT. As above, the whole process currently exists on a timeout here.
 * `poll_delay` is the interval (in seconds) between running the telnet commands to poll status of the modem. The telnet interface remains connected the whole time.
 
 ## Installing and running
