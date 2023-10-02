@@ -360,8 +360,14 @@ host=192.168.1.1
 # user=admin
 # password=admin
 # connect_timeout=8
-# timeout=5
+# timeout=20
 # poll_delay=30
+
+# Totally optional section
+[restart]
+at=02:30
+min_up=9000
+min_down=50000
 ```
 
 (Commented lines are optional and show the default values.)
@@ -382,6 +388,15 @@ host=192.168.1.1
 * `connect_timeout` is timeout (in seconds) before failing to connect to either the modem or the MQTT broker. Currently the program exits if connection fails, and expects some service host to restart it.
 * `timeout` is timeout (in seconds) to read the stats from the modem, or to publish to MQTT. As above, the whole process currently exists on a timeout here.
 * `poll_delay` is the interval (in seconds) between running the telnet commands to poll status of the modem. The telnet interface remains connected the whole time.
+
+* `[restart]`
+
+This section is completely optional, and adds a line rate monitor to check daily if the modem needs restarting (my modem seems to deteriorate speeds every few days, and a restart or possibly just a line retrain will bring the values back up significantly.)
+
+* `at` is a `HH:MM` 24 hour timestamp of when to check the line rates each day.
+* `min_up` and `min_down` are minimum upstream and downstream Kbps rates. These are compared against the `max_rate` values (see below) as reported by the modem, if either value is lower or the modem has lost line sync then the whole modem is restarted.
+
+Restarts will happen at most once every 24 hours, at the check time specified.
 
 ## Installing and running
 

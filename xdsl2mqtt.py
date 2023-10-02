@@ -11,6 +11,7 @@ import telnetlib3
 import json
 import re
 import amqtt.client as amqtt
+from datetime import datetime, timedelta
 
 logger = logging.getLogger(__name__)
 
@@ -210,16 +211,55 @@ async def main(config):
     xdsl_password = xdsl_config.get("password", "admin")
     xdsl_port = int(xdsl_config.get("port", 23))
     xdsl_connect_timeout = int(xdsl_config.get("connect_timeout", 8))
-    xdsl_timeout = int(xdsl_config.get("command_timeout", 5))
+    xdsl_timeout = int(xdsl_config.get("command_timeout", 20))
     xdsl_poll_delay = int(xdsl_config.get("poll_delay", 30))
 
-    t = BroadcomTelnet(xdsl_host, xdsl_port, xdsl_user, xdsl_password)
-    await wait_for(t.connect(), xdsl_connect_timeout)
+    try:
+        # (config.get() is a weird function in configparser...)
+        restart_config = config["restart"]
+    except KeyError:
+        restart_config = None
+
+    if restart_config:
+        restart_at = restart_config["at"]
+        m = re.match(r"(\d+):(\d+)$", restart_at)
+        if m:
+            restart_h, restart_m = (
+                int(d) for d in m.groups()
+            )  # hour and minute to check for restart conditions
+        if not (m and 0 <= restart_h <= 23 and 0 <= restart_m <= 59):
+            raise RuntimeError(
+                f"Config [restart] value {restart_at} must be a valid 24-hour time formatted as HH:MM"
+            )
+        restart_min_up = int(restart_config["min_up"])
+        restart_min_down = int(restart_config["min_down"])
+        logger.info(
+            f"Daily at {restart_at} will check max_rate exceeds upstream {restart_min_up}kbps and downstream {restart_min_down}kbps"
+        )
+
+    def get_next_restart_check():
+        if not restart_config:
+            return None
+        now = datetime.now()
+        next_restart = now.replace(
+            hour=restart_h, minute=restart_m, second=0, microsecond=0
+        )
+        if next_restart < now:
+            next_restart += timedelta(days=1)
+        logger.debug(f"Next restart check at {next_restart}")
+        return next_restart
+
+    t = None
+    next_restart = get_next_restart_check()
 
     m = amqtt.MQTTClient("xdsl2mqtt")
     await wait_for(m.connect(mqtt_uri), xdsl_connect_timeout)
 
     while True:
+        if not t:  # connect to Telnet interface
+            t = BroadcomTelnet(xdsl_host, xdsl_port, xdsl_user, xdsl_password)
+            await wait_for(t.connect(), xdsl_connect_timeout)
+
         stats = await wait_for(t.xdsl_stats(), xdsl_timeout)
         stats["banner"] = t.banner
         interface = await t.ifconfig()
@@ -235,6 +275,32 @@ async def main(config):
         await wait_for(
             m.publish(interface_topic, interface_payload.encode()), xdsl_timeout
         )
+
+        if next_restart and datetime.now() > next_restart:
+            try:
+                up = stats["max_rate"]["up"]
+                down = stats["max_rate"]["down"]
+                logger.info(
+                    f"Checking restart conditions. Up {up} vs min "
+                    f"{restart_min_up}. Down {down} vs min "
+                    f"{restart_min_down}."
+                )
+            except KeyError:
+                up = 0
+                down = 0
+                logger.info(
+                    "Checking restart conditions while interface appears down..."
+                )
+
+            if up < restart_min_up or down < restart_min_down:
+                logger.warning("Restarting modem...")
+                t.writeline("reboot")
+                t = None  # allow garbage collection to clean old socket up
+                logger.info("Waiting for reboot to complete...")
+                await sleep(60)
+                next_restart = get_next_restart_check()
+                continue
+
         await sleep(xdsl_poll_delay)
 
 
