@@ -2,8 +2,6 @@ FROM python:3.11-alpine
 
 WORKDIR /usr/src/app
 
-VOLUME /etc/xdsl2mqtt
-
 # temporary requirement while amqtt in requirements.txt references a git URL
 RUN apk add --no-cache git
 
