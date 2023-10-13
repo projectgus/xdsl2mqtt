@@ -277,6 +277,8 @@ async def main(config):
         )
 
         if next_restart and datetime.now() > next_restart:
+            next_restart = get_next_restart_check()
+
             try:
                 up = stats["max_rate"]["up"]
                 down = stats["max_rate"]["down"]
@@ -298,7 +300,6 @@ async def main(config):
                 t = None  # allow garbage collection to clean old socket up
                 logger.info("Waiting for reboot to complete...")
                 await sleep(60)
-                next_restart = get_next_restart_check()
                 continue
 
         await sleep(xdsl_poll_delay)
