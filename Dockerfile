@@ -2,8 +2,6 @@ FROM python:3.11-alpine
 
 WORKDIR /usr/src/app
 
-# temporary requirement while amqtt in requirements.txt references a git URL
-RUN apk add --no-cache git
 
 COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
