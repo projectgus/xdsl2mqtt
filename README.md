@@ -420,6 +420,8 @@ docker build -t xdsl2mqtt .
 docker run -v ./config.ini:/etc/xdsl2mqtt/config.ini xdsl2mqtt-dev
 ```
 
+Set the `TZ` environment variable in the container if you want local times on logs, etc.
+
 ## MQTT Output
 
 For as long as the telnet connection to the modem stays up, the script periodically runs two commands and parses the output into JSON objects. Values in the JSON objects only appear if the relevant output is found in the Telnet interface, if you don't see something then either the output format is different or that value is not there.
