@@ -316,6 +316,7 @@ if __name__ == "__main__":
 
     debug = config.getboolean("general", "debug", fallback=False)
 
-    logging.basicConfig(level=logging.DEBUG if debug else logging.INFO)
+    logging.basicConfig(level=logging.DEBUG if debug else logging.INFO,
+                        format='%(asctime)s %(levelname)-8s %(message)s')
 
     run(main(config), debug=debug)
